@@ -26,7 +26,8 @@ notify = true
 # One [sweep.<name>] block per source.
 #
 # Required: query, folder, topics, schedule
-# schedule: "daily 07:00", "mon 08:30", or "mon,thu 09:00" (24h, local time)
+# schedule: days then times, local clock. Examples: "daily 2pm", "mon 8:30am",
+#           "mon,thu 14:00", "weekdays 7am,5pm", "weekends noon"
 # The Gmail search window is set from the schedule (weekly = 8 days,
 # daily = 2 days) unless you set lookback_days.
 #
@@ -39,7 +40,7 @@ display_name = "Lenny's Newsletter"
 query = "from:lenny@substack.com"
 folder = "Research Library/Lenny"
 topics = ["Growth", "Product", "Pricing", "Hiring & Teams", "Career"]
-schedule = "sun 09:00"
+schedule = "sun 9am"
 keep = "frameworks, benchmark numbers, and named examples"
 skip = "podcast-is-live blasts with no written lesson, job board posts, sponsor-only emails"
 tags = ["lenny", "product"]
@@ -49,6 +50,6 @@ display_name = "Industry News"
 query = "label:industry-news"
 folder = "Research Library/Industry News"
 topics = ["Platform Updates", "Research & Data", "Competitors"]
-schedule = "daily 07:30"
+schedule = "weekdays 7:30am"
 summary_extra = "If any item announces a platform change that takes effect within 30 days, add a final line: \"Act on: <titles>\"."
 enabled = false

@@ -92,27 +92,60 @@ def get_sweep(sweeps, name):
 
 # -------------------------------------------------------------- schedule
 
-def parse_schedule(text, name="?"):
-    """'daily 07:00', 'mon 08:30', 'mon,thu 09:00' -> (list of weekdays or None, hour, minute)."""
-    m = re.fullmatch(r"\s*([a-z,]+)\s+(\d{1,2}):(\d{2})\s*", text.lower())
-    if not m:
-        sys.exit(f"Sweep '{name}': bad schedule '{text}'. Use 'daily 07:00', 'mon 08:30' or 'mon,thu 09:00'.")
-    days_part, hour, minute = m.group(1), int(m.group(2)), int(m.group(3))
+SCHEDULE_HELP = "Use e.g. 'daily 2pm', 'mon 8:30am', 'mon,thu 14:00' or 'weekdays 7am,5pm'."
+DAY_GROUPS = {"weekdays": [1, 2, 3, 4, 5], "weekends": [0, 6]}
+
+
+def parse_time(text):
+    """'14:00', '2pm', '2:30pm', '2:30 pm', 'noon' -> (hour, minute), or None if invalid."""
+    t = text.strip().replace(" ", "")
+    if t == "noon":
+        return 12, 0
+    if t == "midnight":
+        return 0, 0
+    m = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?(am|pm)?", t)
+    if not m or (m.group(2) is None and m.group(3) is None):
+        return None
+    hour, minute, ampm = int(m.group(1)), int(m.group(2) or 0), m.group(3)
+    if ampm:
+        if not 1 <= hour <= 12:
+            return None
+        hour = hour % 12 + (12 if ampm == "pm" else 0)
     if hour > 23 or minute > 59:
-        sys.exit(f"Sweep '{name}': bad time in schedule '{text}'.")
-    if days_part == "daily":
-        return None, hour, minute
+        return None
+    return hour, minute
+
+
+def parse_schedule(text, name="?"):
+    """'daily 2pm', 'mon,thu 09:00', 'weekdays 7am,5pm' -> (weekdays or None for daily, [(hour, minute), ...])."""
+    parts = text.lower().strip().split(None, 1)
+    if len(parts) != 2:
+        sys.exit(f"Sweep '{name}': bad schedule '{text}'. {SCHEDULE_HELP}")
+    days_part, times_part = parts
+    times = []
+    for t in times_part.split(","):
+        parsed = parse_time(t)
+        if not parsed:
+            sys.exit(f"Sweep '{name}': can't read the time '{t.strip()}' in '{text}'. {SCHEDULE_HELP}")
+        times.append(parsed)
+    times = sorted(set(times))
+    if days_part in ("daily", "everyday"):
+        return None, times
     days = []
     for d in days_part.split(","):
-        if d[:3] not in DAYS:
-            sys.exit(f"Sweep '{name}': unknown day '{d}' in schedule '{text}'.")
-        days.append(DAYS[d[:3]])
-    return sorted(set(days)), hour, minute
+        if d in DAY_GROUPS:
+            days += DAY_GROUPS[d]
+        elif d[:3] in DAYS:
+            days.append(DAYS[d[:3]])
+        else:
+            sys.exit(f"Sweep '{name}': unknown day '{d}' in schedule '{text}'. {SCHEDULE_HELP}")
+    days = sorted(set(days))
+    return (None if len(days) == 7 else days), times
 
 
 def default_lookback(schedule):
     """Days of mail to search: the longest gap between runs, plus one day of overlap."""
-    days, _, _ = parse_schedule(schedule)
+    days, _ = parse_schedule(schedule)
     if days is None:
         return 2
     if len(days) == 1:
@@ -259,11 +292,11 @@ def label_for(settings, name):
 
 
 def plist_for(settings, name, s):
-    days, hour, minute = parse_schedule(s["schedule"], name)
+    days, times = parse_schedule(s["schedule"], name)
     if days is None:
-        interval = {"Hour": hour, "Minute": minute}
+        interval = [{"Hour": h, "Minute": m} for h, m in times]
     else:
-        interval = [{"Weekday": d, "Hour": hour, "Minute": minute} for d in days]
+        interval = [{"Weekday": d, "Hour": h, "Minute": m} for d in days for h, m in times]
     claude = shutil.which("claude")
     path_dirs = [str(Path(claude).parent)] if claude else []
     path_dirs += [str(Path(sys.executable).parent), "/opt/homebrew/bin", "/usr/local/bin",
@@ -374,7 +407,7 @@ def cmd_add():
     query = ask("Gmail search for these emails (e.g. from:hello@example.com)")
     folder = ask("Folder for the notes, relative to notes_root or absolute", display)
     topics = ask("Topic subfolders, comma separated", "Tactics, Strategy, Case Studies, News")
-    schedule = ask("Schedule: 'daily 07:00', 'mon 08:30' or 'mon,thu 09:00'", "mon 08:30")
+    schedule = ask("When should it run? e.g. 'daily 2pm', 'mon 8:30am', 'weekdays 7am,5pm'", "mon 8:30am")
     parse_schedule(schedule, key)
     keep = ask("What to keep verbatim (optional)")
     skip = ask("What to skip (optional)")

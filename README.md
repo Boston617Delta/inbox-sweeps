@@ -41,7 +41,7 @@ display_name = "Lenny's Newsletter"
 query = "from:lenny@substack.com"           # any Gmail search
 folder = "Research Library/Lenny"           # relative to notes_root, or absolute
 topics = ["Growth", "Product", "Pricing"]   # becomes the topic subfolders
-schedule = "sun 09:00"                      # "daily 07:00", "mon 08:30", "mon,thu 09:00"
+schedule = "sun 9am"                        # see Schedules below
 ```
 
 Optional keys:
@@ -55,10 +55,24 @@ Optional keys:
 | `index_file` | Index note name, defaults to `<display_name> MOC.md` |
 | `extra_sections` | Extra Markdown appended to the note template |
 | `summary_extra` | An extra instruction for the summary email, e.g. flag items for a follow-up |
-| `lookback_days` | Override the search window (default: longest gap between runs plus one day) |
+| `lookback_days` | Override the search window (default: longest gap between run days plus one day) |
 | `enabled` | `false` keeps it in config but out of `install` |
 
 The folder, topic subfolders, and index are created on the first run if they don't exist.
+
+## Schedules
+
+A schedule is the days, a space, then one or more times. Times use the Mac's local clock and can be written as `2pm`, `2:30pm`, `14:00`, or `noon`.
+
+| You want | Write |
+|---|---|
+| Every day at 2pm | `daily 2pm` |
+| Mondays at 8:30am | `mon 8:30am` |
+| Mondays and Thursdays at 5:15pm | `mon,thu 5:15pm` |
+| Weekdays, morning and end of day | `weekdays 7am,5pm` |
+| Saturday and Sunday at noon | `weekends noon` |
+
+A sweep usually finishes within a few minutes. If you want the notes ready before a meeting, schedule it 15 to 30 minutes ahead.
 
 ## Commands
 
