@@ -1,0 +1,54 @@
+# inbox-sweeps config. Copy to sweeps.toml (gitignored) and edit,
+# or run ./sweep.py add to build it with prompts.
+
+[settings]
+# Where your notes live. Each sweep's `folder` is relative to this unless absolute.
+notes_root = "~/Documents/Obsidian Vault"
+
+# Who gets the summary email after each run. Leave empty to skip the email.
+email_to = "you@example.com"
+
+# Directory claude runs from. Must be one where your Gmail MCP server is configured.
+claude_workdir = "~"
+
+# Gmail MCP tool names. Defaults match the Google Workspace (gws) MCP server.
+# gmail_list_tool = "mcp__gws__gmail_users_messages_list"
+# gmail_get_tool  = "mcp__gws__gmail_users_messages_get"
+# gmail_send_tool = "mcp__gws__gmail_users_messages_send"
+
+# House style applied to every note and summary email (optional).
+style_rules = "Never use em dashes or en dashes; use commas, colons, or periods."
+
+# macOS notification when a run finishes or fails.
+notify = true
+
+# --------------------------------------------------------------------------
+# One [sweep.<name>] block per source.
+#
+# Required: query, folder, topics, schedule
+# schedule: "daily 07:00", "mon 08:30", or "mon,thu 09:00" (24h, local time)
+# The Gmail search window is set from the schedule (weekly = 8 days,
+# daily = 2 days) unless you set lookback_days.
+#
+# Optional: display_name, index_file, source, tags, keep, skip, title_strip,
+#           extra_sections, summary_extra, lookback_days, enabled
+# --------------------------------------------------------------------------
+
+[sweep.lennys-newsletter]
+display_name = "Lenny's Newsletter"
+query = "from:lenny@substack.com"
+folder = "Research Library/Lenny"
+topics = ["Growth", "Product", "Pricing", "Hiring & Teams", "Career"]
+schedule = "sun 09:00"
+keep = "frameworks, benchmark numbers, and named examples"
+skip = "podcast-is-live blasts with no written lesson, job board posts, sponsor-only emails"
+tags = ["lenny", "product"]
+
+[sweep.industry-news]
+display_name = "Industry News"
+query = "label:industry-news"
+folder = "Research Library/Industry News"
+topics = ["Platform Updates", "Research & Data", "Competitors"]
+schedule = "daily 07:30"
+summary_extra = "If any item announces a platform change that takes effect within 30 days, add a final line: \"Act on: <titles>\"."
+enabled = false

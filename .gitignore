@@ -1,0 +1,6 @@
+# Personal config: your addresses, paths, and sources
+sweeps.toml
+logs/
+*.log
+__pycache__/
+.DS_Store
