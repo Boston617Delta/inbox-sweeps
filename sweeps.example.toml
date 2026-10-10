@@ -15,6 +15,7 @@ claude_workdir = "~"
 # gmail_list_tool = "mcp__gws__gmail_users_messages_list"
 # gmail_get_tool  = "mcp__gws__gmail_users_messages_get"
 # gmail_send_tool = "mcp__gws__gmail_users_messages_send"
+# gmail_trash_tool = "mcp__gws__gmail_users_messages_trash"  # only used by trash_processed
 
 # House style applied to every note and summary email (optional).
 style_rules = "Never use em dashes or en dashes; use commas, colons, or periods."

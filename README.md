@@ -24,7 +24,7 @@ A run that fails (API error, timeout, rate limit) retries once after 60 seconds.
 ## Setup
 
 ```sh
-git clone <this repo> && cd inbox-sweeps
+git clone https://github.com/Boston617Delta/inbox-sweeps.git && cd inbox-sweeps
 ./sweep.py add            # answers a few questions, writes sweeps.toml
 ./sweep.py prompt <name>  # preview exactly what Claude will be told
 ./sweep.py run <name>     # run it once now, check the notes and summary
@@ -91,6 +91,11 @@ After changing a sweep's schedule, run `install` again to pick up the change. Pr
 
 ## Notes
 
-- Runs use `claude -p --dangerously-skip-permissions` with an explicit `--allowedTools` list: the three Gmail tools plus Read, Write, Edit, and Bash. Review the prompt with `./sweep.py prompt` before you schedule anything.
+- Runs use `claude -p --dangerously-skip-permissions` with an explicit `--allowedTools` list: the Gmail list, get, and send tools plus Read, Write, Edit, and Bash. `fetch_articles` adds WebFetch and `trash_processed` adds the Gmail trash tool, for that sweep only. Review the prompt with `./sweep.py prompt` before you schedule anything.
+- Claude reads the full text of every matching email, and newsletters are written by other people. Point sweeps only at senders you trust, keep `query` narrow (a specific `from:` address beats a keyword), and keep `notes_root` away from anything you would not want edited.
 - The Mac has to be awake at the scheduled time. launchd runs a missed job when the machine wakes, but not one that was missed while it was shut down.
 - Existing notes are never modified. To rebuild one, delete it and the next run refiles it if the email is still inside the window.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
