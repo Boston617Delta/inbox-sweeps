@@ -55,6 +55,8 @@ Optional keys:
 | `index_file` | Index note name, defaults to `<display_name> MOC.md` |
 | `extra_sections` | Extra Markdown appended to the note template |
 | `summary_extra` | An extra instruction for the summary email, e.g. flag items for a follow-up |
+| `fetch_articles` | `true` for teaser-style digests: the sweep fetches the lead article with WebFetch and writes the note from it (adds WebFetch to that sweep's allowed tools only) |
+| `trash_processed` | `true` to move every email the run handled (filed, already filed, skipped promos) to Gmail Trash once the notes are written; listed in the summary email |
 | `lookback_days` | Override the search window (default: longest gap between run days plus one day) |
 | `enabled` | `false` keeps it in config but out of `install` |
 

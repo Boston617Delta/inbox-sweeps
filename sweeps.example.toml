@@ -32,7 +32,7 @@ notify = true
 # daily = 2 days) unless you set lookback_days.
 #
 # Optional: display_name, index_file, source, tags, keep, skip, title_strip,
-#           extra_sections, summary_extra, lookback_days, enabled
+#           extra_sections, summary_extra, fetch_articles, trash_processed, lookback_days, enabled
 # --------------------------------------------------------------------------
 
 [sweep.lennys-newsletter]

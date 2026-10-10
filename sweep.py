@@ -44,6 +44,7 @@ DEFAULT_SETTINGS = {
     "gmail_list_tool": "mcp__gws__gmail_users_messages_list",
     "gmail_get_tool": "mcp__gws__gmail_users_messages_get",
     "gmail_send_tool": "mcp__gws__gmail_users_messages_send",
+    "gmail_trash_tool": "mcp__gws__gmail_users_messages_trash",
     "style_rules": "",
     "extra_allowed_tools": [],
 }
@@ -174,6 +175,16 @@ def build_prompt(settings, s):
         title_rule += f', drop the "{s["title_strip"]}" prefix'
     title_rule += ', never use ":" or "#" or "/" in filenames).'
 
+    fetch_rule = ""
+    if s.get("fetch_articles"):
+        fetch_rule = (
+            "- If the email was not skipped, get the full story before writing, because the email only carries teasers: find the link to the "
+            "lead article in the email body (tracking links are fine, WebFetch follows redirects) and fetch it "
+            "with WebFetch. Write \"The tip\" from the full article, and add a \"url: <article URL>\" line to the "
+            "frontmatter. If the fetch fails or is paywalled, fall back to the email text and say so in one line "
+            "at the end of the note. Fetch only the lead article, never the \"Also in this email\" items.\n"
+        )
+
     extra_sections = s.get("extra_sections", "").strip()
     extra_sections = f"\n\n{extra_sections}" if extra_sections else ""
 
@@ -188,7 +199,7 @@ Step 1: Using {settings["gmail_list_tool"]} (userId "me"), search q: "{query}". 
 Step 2: FIRST use Bash to run: find "{folder}" -name "*.md" and treat that list as the existing notes. Do not use Glob for this step; an empty list here means the tool failed, not that the library is empty. Then for each email that has real substance (skip {skip_items}):
 - {title_rule}
 - Compare the title against the existing note list CASE-INSENSITIVELY and ignoring punctuation differences. If any existing note matches, skip this email.
-- Otherwise pick the best-fitting topic folder from the list above and Write the note there using exactly this template:
+{fetch_rule}- Then pick the best-fitting topic folder from the list above and Write the note there using exactly this template:
 
 ---
 source: {source}
@@ -208,11 +219,17 @@ tags: [{tags}]
 - Then Read "{index_file}", and use Edit to add one line for the new note at the END of the matching topic section, format: - [[<Clean Title>]]: <very short hook>
 """
 
+    if s.get("trash_processed"):
+        prompt += f"""
+Step 2b: Once every note and index line is written, move every email this run handled to Trash with {settings["gmail_trash_tool"]} (userId "me", id <message id>): the ones you filed, the ones skipped as already filed, and the ones skipped as promos. Skip any message that already has the TRASH label. Never trash an email whose note failed to write, and never trash anything outside this run's search results.
+"""
+
     if settings["email_to"]:
+        trash_note = " List the emails moved to Trash as a short footnote." if s.get("trash_processed") else ""
         summary_extra = s.get("summary_extra", "").strip()
         summary_extra = f" {summary_extra}" if summary_extra else ""
         prompt += f"""
-Step 3: Send a summary email with {settings["gmail_send_tool"]} (userId "me") to {settings["email_to"]}, subject "{display} sweep {run_date}: <N> new notes filed". Body: one line per new note (title, topic, takeaway), or "No new {display} emails this run" if nothing was filed. Include already-filed skips as a short footnote.{summary_extra} Build a plain-text RFC 2822 message and base64url-encode it for the "raw" field.
+Step 3: Send a summary email with {settings["gmail_send_tool"]} (userId "me") to {settings["email_to"]}, subject "{display} sweep {run_date}: <N> new notes filed". Body: one line per new note (title, topic, takeaway), or "No new {display} emails this run" if nothing was filed. Include already-filed skips as a short footnote.{trash_note}{summary_extra} Build a plain-text RFC 2822 message and base64url-encode it for the "raw" field.
 """
 
     rules = ["Do not modify existing notes.", "Do not print note contents to stdout."]
@@ -222,11 +239,15 @@ Step 3: Send a summary email with {settings["gmail_send_tool"]} (userId "me") to
     return prompt
 
 
-def allowed_tools(settings):
+def allowed_tools(settings, s):
     tools = [settings["gmail_list_tool"], settings["gmail_get_tool"]]
     if settings["email_to"]:
         tools.append(settings["gmail_send_tool"])
     tools += ["Read", "Write", "Edit", "Bash"] + list(settings["extra_allowed_tools"])
+    if s.get("fetch_articles"):
+        tools.append("WebFetch")
+    if s.get("trash_processed"):
+        tools.append(settings["gmail_trash_tool"])
     return ",".join(tools)
 
 
@@ -259,7 +280,7 @@ def cmd_run(name):
     def attempt():
         with tempfile.TemporaryFile("w+") as out:
             proc = subprocess.run(
-                [claude, "-p", prompt, "--allowedTools", allowed_tools(settings),
+                [claude, "-p", prompt, "--allowedTools", allowed_tools(settings, s),
                  "--dangerously-skip-permissions"],
                 cwd=workdir, stdout=out, stderr=subprocess.STDOUT, text=True,
             )
